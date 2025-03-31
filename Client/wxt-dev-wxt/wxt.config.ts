@@ -4,6 +4,8 @@ import {defineConfig} from 'wxt';
 export default defineConfig({
     extensionApi: 'chrome',
     manifest: {
+        name: "Crunchyroll-W2G",
+        description: "Easy synchronisation for Crunchyroll videos to watch with your friends.",
         permissions: [
             "storage",
         ],
@@ -14,5 +16,8 @@ export default defineConfig({
     },
     runner: {
         chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
-    }
+    },
+    modules: [
+        '@wxt-dev/auto-icons',
+    ],
 });

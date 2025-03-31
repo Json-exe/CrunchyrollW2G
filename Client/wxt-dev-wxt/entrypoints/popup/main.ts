@@ -1,9 +1,9 @@
 import './style.css';
-import {delay} from "@/components/utilities";
 import {useVideoSyncService} from "@/components/services/VideoSyncService";
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div style="display: flex; flex-direction: column; gap: 8px; min-width: 300px;">
+    <img src="./icon.png" alt="Extension icon" height="50" width="50" style="align-self: center;">
     <h2 id="current-lobby-info">No Lobby</h2>
     <button id="reload-lobby-info">Reload</button>
     <div class="card" style="display: flex; gap: 3px; justify-content: center; align-items: center;">
