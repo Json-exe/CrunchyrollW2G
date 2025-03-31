@@ -43,20 +43,20 @@ internal class WatchTogetherHub : Hub
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, existingGroupId);
         }
-        
+
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
         Context.Items.TryAdd("GroupId", groupId);
         _logger.LogInformation("Client {ConnectionId} joined group {GroupName}", Context.ConnectionId, groupId);
     }
 
-    public async Task PlayVideo()
+    public async Task PlayVideo(float timeStamp = 0)
     {
         if (!GetGroupId(out var groupId))
         {
             return;
         }
 
-        await Clients.Group(groupId).SendAsync("PlayVideo");
+        await Clients.Group(groupId).SendAsync("PlayVideo", timeStamp);
         // await Clients.OthersInGroup(groupId).SendAsync("PlayVideo");
         _logger.LogInformation("Client {ConnectionId} played video in group {GroupName}", Context.ConnectionId,
             groupId);
@@ -74,7 +74,20 @@ internal class WatchTogetherHub : Hub
         _logger.LogInformation("Client {ConnectionId} stopped video in group {GroupName}", Context.ConnectionId,
             groupId);
     }
-    
+
+    public async Task SeekVideo(float timeStamp)
+    {
+        if (!GetGroupId(out var groupId))
+        {
+            return;
+        }
+
+        await Clients.Group(groupId).SendAsync("SeekVideo", timeStamp);
+        // await Clients.OthersInGroup(groupId).SendAsync("SeekVideo", timeStamp);
+        _logger.LogInformation("Client {ConnectionId} seeked video with timestamp {TimeStamp} in group {GroupName}",
+            Context.ConnectionId, timeStamp, groupId);
+    }
+
     public async Task LeaveLobby()
     {
         if (GetGroupId(out var groupId))

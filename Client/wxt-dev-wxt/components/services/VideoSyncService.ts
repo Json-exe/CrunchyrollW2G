@@ -11,15 +11,21 @@ export class VideoSyncService {
         return this.lobbyInfo;
     }
 
-    public async sendPlayState() {
+    public async sendPlayState(timeStamp: number) {
         if (this.connection) {
-            await this.connection.invoke("PlayVideo");
+            await this.connection.invoke("PlayVideo", timeStamp);
         }
     }
 
     public async sendPausedState() {
         if (this.connection) {
             await this.connection.invoke("PauseVideo");
+        }
+    }
+    
+    public async sendSeekState(timeStamp: number) {
+        if (this.connection) {
+            await this.connection.invoke("SeekVideo", timeStamp);
         }
     }
 
@@ -73,14 +79,22 @@ export class VideoSyncService {
             console.log('SignalR hub reconnected');
             this.lobbyInfo.isConnected = true;
         })
-        connection.on('PlayVideo', async () => {
+        connection.on('PlayVideo', async (timeStamp: number) => {
             console.log('Received play event from SignalR hub');
             chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
                 for (const tab of tabs) {
-                    await sendMessage('videoPlay', undefined, tab.id)
+                    await sendMessage('videoPlay', timeStamp, tab.id)
                 }
             })
         });
+        connection.on('SeekVideo', async (timeStamp: number) => {
+            console.log('Received seek event from SignalR hub');
+            chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
+                for (const tab of tabs) {
+                    await sendMessage('videoSeek', timeStamp, tab.id)
+                }
+            })
+        })
         connection.on('PauseVideo', async () => {
             console.log('Received pause event from SignalR hub');
             chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {

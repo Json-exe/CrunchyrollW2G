@@ -67,12 +67,24 @@ function registerServiceEvents() {
         return;
     }
 
-    onMessage('videoPlay', () => {
-        console.log('Video play');
+    onMessage('videoPlay', (message) => {
+        console.log('Video play: ', message.data);
+        // signalREvent = true;
+        // videoElement?.play();
     })
-    
+
     onMessage('videoPause', () => {
         console.log('Video pause');
+        // signalREvent = true;
+        // videoElement?.pause();
+    })
+
+    onMessage('videoSeek', (message) => {
+        console.log('Video seek: ', message.data);
+        // signalREvent = true;
+        // if (videoElement) {
+        //     videoElement.currentTime = message.data;
+        // }
     })
 }
 
@@ -82,12 +94,13 @@ function registerVideoEvents() {
     }
 
     videoElement.autoplay = false;
+    videoElement.pause();
 
     videoElement.addEventListener('play', async () => {
         console.log('Video playing');
-        if (!signalREvent) {
+        if (!signalREvent && videoElement) {
             console.log('Sending play event to SignalR hub');
-            await videoSyncService?.sendPlayState();
+            await videoSyncService?.sendPlayState(videoElement.currentTime);
         }
         signalREvent = false;
     })
@@ -103,6 +116,20 @@ function registerVideoEvents() {
 
     videoElement.addEventListener('canplaythrough', () => {
         console.log('Video can play through');
+    })
+
+    videoElement.addEventListener('canplay', () => {
+        console.log('Video canplay');
+        signalREvent = true;
         videoElement?.pause();
+    })
+
+    videoElement.addEventListener('seeked', async () => {
+        console.log('Video seeking');
+        if (!signalREvent && videoElement) {
+            console.log('Sending seek event to SignalR hub');
+            await videoSyncService?.sendSeekState(videoElement.currentTime)
+        }
+        signalREvent = false;
     })
 }
