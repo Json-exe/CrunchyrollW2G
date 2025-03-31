@@ -1,0 +1,28 @@
+{
+  "name": "crunchyroll-w2g",
+  "description": "A easy extension to sync video playback on Crunchyroll with your friends.",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:chrome": "wxt -b chrome",
+    "build": "wxt build",
+    "build:chrome": "wxt build -b chrome",
+    "zip": "wxt zip",
+    "zip:chrome": "wxt zip -b chrome",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.280",
+    "typescript": "^5.6.3",
+    "wxt": "^0.19.29"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
+    "@types/node": "^22.13.11",
+    "@webext-core/messaging": "^2.2.0",
+    "@webext-core/proxy-service": "^1.2.1"
+  }
+}
