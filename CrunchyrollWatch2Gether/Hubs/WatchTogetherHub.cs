@@ -74,6 +74,16 @@ internal class WatchTogetherHub : Hub
         _logger.LogInformation("Client {ConnectionId} stopped video in group {GroupName}", Context.ConnectionId,
             groupId);
     }
+    
+    public async Task LeaveLobby()
+    {
+        if (GetGroupId(out var groupId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+            Context.Items.Remove("GroupId");
+            _logger.LogInformation("Client {ConnectionId} left group {GroupName}", Context.ConnectionId, groupId);
+        }
+    }
 
     private bool GetGroupId(out string groupId)
     {

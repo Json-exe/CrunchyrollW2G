@@ -108,6 +108,24 @@ export class VideoSyncService {
 
         return false;
     }
+    
+    public async leaveLobby() {
+        if (!this.connection) {
+            console.error('Connection not initialized');
+            return false;
+        }
+        
+        try {
+            await this.connection.invoke('LeaveLobby');
+            this.lobbyInfo.lobbyId = undefined;
+            console.log("Left lobby successfully!")
+            return true;
+        } catch (error) {
+            console.error('Error leaveing lobby:', error);
+        }
+        
+        return false;
+    }
 
     public async createLobby() {
         if (!this.connection) {

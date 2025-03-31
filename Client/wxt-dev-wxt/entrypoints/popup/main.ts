@@ -23,7 +23,7 @@ const createBtn = document.getElementById('create-lobby-btn')!;
 createBtn.addEventListener('click', createNewLobby);
 const leaveBtn = document.getElementById('leave-lobby-btn')!;
 const lobbyInfo = document.getElementById('current-lobby-info') as HTMLHeadingElement;
-// leaveBtn.addEventListener('click', leaveLobby);
+leaveBtn.addEventListener('click', leaveLobby);
 
 const videoSyncService = useVideoSyncService();
 
@@ -40,7 +40,7 @@ async function joinLobbyClick() {
 }
 
 async function createNewLobby() {
-    let lobby = await videoSyncService.getLobbyInfo();
+    const lobby = await videoSyncService.getLobbyInfo();
     if (!lobby.isConnected) {
         alert('Please connect to the server first by navigating to a series/video page');
         return;
@@ -51,34 +51,23 @@ async function createNewLobby() {
     await reloadLobbyInfo();
 }
 
-// function leaveLobby() {
-//     if (!videoSyncService.lobby.isConnected) {
-//         alert('Please connect to the server first by navigating to a series/video page');
-//         return;
-//     }
-//
-//     // TODO: Implement leave lobby functionality
-//
-//     return;
-//     lobbyInfo.innerText = `Leaving lobby...`;
-//     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-//         tabs.forEach(tab => {
-//             if (!tab.id) {
-//                 return;
-//             }
-//             chrome.tabs.sendMessage(tab.id, {type: 'leaveLobby'}).then(async () => {
-//                 await delay(250);
-//                 await reloadLobbyInfo()
-//             });
-//         });
-//     })
-// }
+async function leaveLobby() {
+    const lobby = await videoSyncService.getLobbyInfo();
+    if (!lobby.isConnected) {
+        alert('Please connect to the server first by navigating to a series/video page');
+        return;
+    }
+
+    lobbyInfo.innerText = `Leaving lobby...`;
+    if (await videoSyncService.leaveLobby()) {
+        await reloadLobbyInfo();
+    }
+}
 
 async function reloadLobbyInfo() {
-    let lobby = await videoSyncService.getLobbyInfo();
+    const lobby = await videoSyncService.getLobbyInfo();
     console.log('Lobby data:', lobby);
-    if (lobby.isConnected &&
-        lobby.lobbyId) {
+    if (lobby.isConnected && lobby.lobbyId) {
         lobbyInfo.innerText = `Lobby: ${lobby.lobbyId}`;
         createBtn.style.display = 'none';
         leaveBtn.style.display = 'block';
