@@ -28,12 +28,20 @@ export class VideoSyncService {
             await this.connection.invoke("SeekVideo", timeStamp);
         }
     }
+    
+    public async sendVideoSwitch(url: string) {
+        if (this.connection) {
+            console.log('sending video switch...');
+            await this.connection.invoke("SwitchVideo", url);
+        }
+    }
 
     public async stopSignalRHub() {
         if (this.connection) {
             console.log('Stopping SignalR hub connection');
             await this.connection.stop();
             this.lobbyInfo.isConnected = false;
+            this.lobbyInfo.lobbyId = undefined;
         }
     }
 
@@ -70,6 +78,7 @@ export class VideoSyncService {
         connection.onclose(async () => {
             console.log('SignalR hub connection closed');
             this.lobbyInfo.isConnected = false;
+            this.lobbyInfo.lobbyId = undefined;
         })
         connection.onreconnecting(() => {
             console.log('SignalR hub connection lost, reconnecting...');
@@ -103,6 +112,14 @@ export class VideoSyncService {
                 }
             })
         });
+        connection.on('SwitchVideo', async (url: string) => {
+            console.log('Received switch event from SignalR hub');
+            chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
+                for (const tab of tabs) {
+                    await sendMessage('switchVideo', url, tab.id)
+                }
+            })
+        })
     }
 
     public async joinLobby(lobbyId: string) {

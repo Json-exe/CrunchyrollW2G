@@ -37,6 +37,20 @@ internal class WatchTogetherHub : Hub
         return groupId;
     }
 
+    public async Task SwitchVideo(string url)
+    {
+        if (!GetGroupId(out var groupId))
+        {
+            return;
+        }
+        
+        Context.Items["VideoUrl"] = url;
+        await Clients.Group(groupId).SendAsync("SwitchVideo", url);
+        // await Clients.OthersInGroup(groupId).SendAsync("SwitchVideo", url);
+        _logger.LogInformation("Client {ConnectionId} switched video to {Url} in group {GroupName}", Context.ConnectionId,
+            url, groupId);
+    }
+
     public async Task JoinLobby(string groupId)
     {
         if (GetGroupId(out var existingGroupId))
