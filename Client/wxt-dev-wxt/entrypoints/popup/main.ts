@@ -13,14 +13,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div class="card" style="display: flex; justify-content: center; align-items: center;">
         <button id="create-lobby-btn">Create new Lobby!</button>
         <button id="leave-lobby-btn" style="display: none;">Leave Lobby!</button>
-        <button id="test-btn">Test something</button>
      </div>
   </div>
 `;
 
 document.getElementById('reload-lobby-info')?.addEventListener('click', reloadLobbyInfo);
 document.getElementById('join-lobby-btn')?.addEventListener('click', joinLobbyClick);
-document.getElementById('test-btn')?.addEventListener('click', testSomething);
 const createBtn = document.getElementById('create-lobby-btn')!;
 createBtn.addEventListener('click', createNewLobby);
 const leaveBtn = document.getElementById('leave-lobby-btn')!;
@@ -28,10 +26,6 @@ const lobbyInfo = document.getElementById('current-lobby-info') as HTMLHeadingEl
 leaveBtn.addEventListener('click', leaveLobby);
 
 const videoSyncService = useVideoSyncService();
-
-async function testSomething() {
-    await videoSyncService.sendVideoSwitch('https://www.crunchyroll.com/de/watch/GR790XV16/an-endless-wasteland');
-}
 
 async function joinLobbyClick() {
     const lobbyId = (document.getElementById('lobby-id-input') as HTMLInputElement).value;

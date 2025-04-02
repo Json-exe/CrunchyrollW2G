@@ -45,8 +45,8 @@ internal class WatchTogetherHub : Hub
         }
         
         Context.Items["VideoUrl"] = url;
-        await Clients.Group(groupId).SendAsync("SwitchVideo", url);
-        // await Clients.OthersInGroup(groupId).SendAsync("SwitchVideo", url);
+        // await Clients.Group(groupId).SendAsync("SwitchVideo", url);
+        await Clients.OthersInGroup(groupId).SendAsync("SwitchVideo", url);
         _logger.LogInformation("Client {ConnectionId} switched video to {Url} in group {GroupName}", Context.ConnectionId,
             url, groupId);
     }
@@ -83,8 +83,8 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        await Clients.Group(groupId).SendAsync("PauseVideo");
-        // await Clients.OthersInGroup(groupId).SendAsync("PauseVideo");
+        // await Clients.Group(groupId).SendAsync("PauseVideo");
+        await Clients.OthersInGroup(groupId).SendAsync("PauseVideo");
         _logger.LogInformation("Client {ConnectionId} stopped video in group {GroupName}", Context.ConnectionId,
             groupId);
     }
@@ -96,8 +96,8 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        await Clients.Group(groupId).SendAsync("SeekVideo", timeStamp);
-        // await Clients.OthersInGroup(groupId).SendAsync("SeekVideo", timeStamp);
+        // await Clients.Group(groupId).SendAsync("SeekVideo", timeStamp);
+        await Clients.OthersInGroup(groupId).SendAsync("SeekVideo", timeStamp);
         _logger.LogInformation("Client {ConnectionId} seeked video with timestamp {TimeStamp} in group {GroupName}",
             Context.ConnectionId, timeStamp, groupId);
     }

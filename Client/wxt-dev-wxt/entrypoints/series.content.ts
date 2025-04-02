@@ -1,5 +1,4 @@
 ﻿import {defineContentScript, MatchPattern} from "wxt/sandbox";
-import {sendMessage} from "@/components/MessagingTypes";
 import {useVideoSyncService} from "@/components/services/VideoSyncService";
 import {onMessage} from "@/components/MessagingTypes";
 
@@ -26,7 +25,7 @@ export default defineContentScript({
                 } else {
                     if (watchPattern.includes(newUrl)) {
                         if (!signalREvent) {
-                            // await videoSyncService.sendVideoSwitch(newUrl.toString());
+                            await videoSyncService.sendVideoSwitch(newUrl.toString());
                         } else {
                             signalREvent = false;
                         }
@@ -34,7 +33,7 @@ export default defineContentScript({
                 }
             }
         }
-        
+
         ctx.addEventListener(window, "wxt:locationchange", async ({newUrl}) => {
             await locationChangedEventHandler(newUrl);
         });
@@ -42,7 +41,7 @@ export default defineContentScript({
         onMessage('switchVideo', (msg) => {
             signalREvent = true;
             const targetUrl = msg.data;
-            if (watchPattern.includes(targetUrl)) {
+            if (watchPattern.includes(targetUrl) && targetUrl !== window.location.href) {
                 console.log("Navigating to watch page: ", targetUrl);
                 const tempLink = document.createElement('a');
                 tempLink.href = targetUrl;
@@ -56,7 +55,3 @@ export default defineContentScript({
         await locationChangedEventHandler(new URL(window.location.href));
     }
 })
-
-async function sendUpdateSignalRMessage(connect: boolean) {
-    await sendMessage('updateSignalRState', connect);
-}
