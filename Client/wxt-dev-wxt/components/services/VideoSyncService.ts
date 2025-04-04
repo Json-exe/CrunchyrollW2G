@@ -51,11 +51,7 @@ export class VideoSyncService {
         }
 
         this.connection = new HubConnectionBuilder()
-            // .withUrl("https://exactly-amusing-cardinal.ngrok-free.app/hubs/w2g", {
-            //     withCredentials: false,
-            //     transport: HttpTransportType.WebSockets
-            // })
-            .withUrl("http://localhost:5209/hubs/w2g", {
+            .withUrl(import.meta.env.WXT_SIGNALR_URL, {
                 withCredentials: false,
                 transport: HttpTransportType.WebSockets
             })

@@ -69,22 +69,22 @@ function registerServiceEvents() {
 
     onMessage('videoPlay', (message) => {
         console.log('Video play: ', message.data);
-        // signalREvent = true;
-        // videoElement?.play();
+        signalREvent = true;
+        videoElement?.play();
     })
 
     onMessage('videoPause', () => {
         console.log('Video pause');
-        // signalREvent = true;
-        // videoElement?.pause();
+        signalREvent = true;
+        videoElement?.pause();
     })
 
     onMessage('videoSeek', (message) => {
         console.log('Video seek: ', message.data);
-        // signalREvent = true;
-        // if (videoElement) {
-        //     videoElement.currentTime = message.data;
-        // }
+        signalREvent = true;
+        if (videoElement) {
+            videoElement.currentTime = message.data;
+        }
     })
 }
 
