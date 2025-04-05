@@ -6,8 +6,9 @@ import {ProxyService} from "@webext-core/proxy-service";
 import {onMessage} from "@/components/MessagingTypes";
 
 let videoElement: HTMLVideoElement | undefined;
-let signalREvent: boolean = false;
+let blockSignalRSending: boolean = false;
 let videoSyncService: ProxyService<VideoSyncService> | undefined;
+let firstLoad: boolean = false;
 
 export default defineContentScript({
     matches: ['https://static.crunchyroll.com/vilos-v2/web/vilos/player.html*'],
@@ -27,7 +28,6 @@ export default defineContentScript({
         })
         ctx.onInvalidated(async () => {
             console.log('Content script invalidated');
-            await chrome.runtime.sendMessage({type: 'contentScriptInvalidated'});
         })
 
         if (!await searchForVideoElement()) {
@@ -57,6 +57,7 @@ async function searchForVideoElement() {
     }
 
     console.log('Video element found:', videoElement);
+    firstLoad = true;
     registerVideoEvents();
     registerServiceEvents();
     return true;
@@ -69,19 +70,19 @@ function registerServiceEvents() {
 
     onMessage('videoPlay', (message) => {
         console.log('Video play: ', message.data);
-        signalREvent = true;
+        blockSignalRSending = true;
         videoElement?.play();
     })
 
     onMessage('videoPause', () => {
         console.log('Video pause');
-        signalREvent = true;
+        blockSignalRSending = true;
         videoElement?.pause();
     })
 
     onMessage('videoSeek', (message) => {
         console.log('Video seek: ', message.data);
-        signalREvent = true;
+        blockSignalRSending = true;
         if (videoElement) {
             videoElement.currentTime = message.data;
         }
@@ -94,24 +95,23 @@ function registerVideoEvents() {
     }
 
     videoElement.autoplay = false;
-    videoElement.pause();
 
     videoElement.addEventListener('play', async () => {
         console.log('Video playing');
-        if (!signalREvent && videoElement) {
+        if (!blockSignalRSending && !firstLoad && videoElement) {
             console.log('Sending play event to SignalR hub');
             await videoSyncService?.sendPlayState(videoElement.currentTime);
         }
-        signalREvent = false;
+        blockSignalRSending = false;
     })
 
     videoElement.addEventListener('pause', async () => {
         console.log('Video paused');
-        if (!signalREvent) {
+        if (!blockSignalRSending && !firstLoad) {
             console.log('Sending pause event to SignalR hub');
             await videoSyncService?.sendPausedState();
         }
-        signalREvent = false;
+        blockSignalRSending = false;
     })
 
     videoElement.addEventListener('canplaythrough', () => {
@@ -120,16 +120,24 @@ function registerVideoEvents() {
 
     videoElement.addEventListener('canplay', () => {
         console.log('Video canplay');
-        signalREvent = true;
-        videoElement?.pause();
+        if (firstLoad) {
+            videoElement?.pause();
+            firstLoad = false;
+        }
     })
 
     videoElement.addEventListener('seeked', async () => {
-        console.log('Video seeking');
-        if (!signalREvent && videoElement) {
+        console.log(`Video seeked. Block SignalR: ${blockSignalRSending}`);
+        if (!blockSignalRSending && !firstLoad && videoElement) {
             console.log('Sending seek event to SignalR hub');
-            await videoSyncService?.sendSeekState(videoElement.currentTime)
+            await videoSyncService?.sendSeekState(videoElement.currentTime);
+            blockSignalRSending = true;
         }
-        signalREvent = false;
+        videoElement?.pause();
+        while (!videoElement?.paused) {
+            await delay(10);
+        }
+
+        blockSignalRSending = false;
     })
 }

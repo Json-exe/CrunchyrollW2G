@@ -22,13 +22,13 @@ export class VideoSyncService {
             await this.connection.invoke("PauseVideo");
         }
     }
-    
+
     public async sendSeekState(timeStamp: number) {
         if (this.connection) {
             await this.connection.invoke("SeekVideo", timeStamp);
         }
     }
-    
+
     public async sendVideoSwitch(url: string) {
         if (this.connection) {
             console.log('sending video switch...');
@@ -80,9 +80,12 @@ export class VideoSyncService {
             console.log('SignalR hub connection lost, reconnecting...');
             this.lobbyInfo.isConnected = false;
         })
-        connection.onreconnected(() => {
+        connection.onreconnected(async () => {
             console.log('SignalR hub reconnected');
             this.lobbyInfo.isConnected = true;
+            if (this.lobbyInfo.lobbyId) {
+                await this.joinLobby(this.lobbyInfo.lobbyId);
+            }
         })
         connection.on('PlayVideo', async (timeStamp: number) => {
             console.log('Received play event from SignalR hub');
@@ -135,13 +138,13 @@ export class VideoSyncService {
 
         return false;
     }
-    
+
     public async leaveLobby() {
         if (!this.connection) {
             console.error('Connection not initialized');
             return false;
         }
-        
+
         try {
             await this.connection.invoke('LeaveLobby');
             this.lobbyInfo.lobbyId = undefined;
@@ -150,7 +153,7 @@ export class VideoSyncService {
         } catch (error) {
             console.error('Error leaveing lobby:', error);
         }
-        
+
         return false;
     }
 
