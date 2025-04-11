@@ -68,22 +68,26 @@ function registerServiceEvents() {
         return;
     }
 
-    onMessage('videoPlay', (message) => {
+    onMessage('videoPlay', async (message) => {
         console.log('Video play: ', message.data);
-        blockSignalRSending = true;
-        videoElement?.play();
+        if (videoElement) {
+            blockSignalRSending = true;
+            await videoElement.play();
+        }
     })
 
     onMessage('videoPause', () => {
         console.log('Video pause');
-        blockSignalRSending = true;
-        videoElement?.pause();
+        if (videoElement) {
+            blockSignalRSending = true;
+            videoElement.pause();
+        }
     })
 
     onMessage('videoSeek', (message) => {
         console.log('Video seek: ', message.data);
-        blockSignalRSending = true;
         if (videoElement) {
+            blockSignalRSending = true;
             videoElement.currentTime = message.data;
         }
     })
@@ -118,11 +122,14 @@ function registerVideoEvents() {
         console.log('Video can play through');
     })
 
-    videoElement.addEventListener('canplay', () => {
+    videoElement.addEventListener('canplay', async () => {
         console.log('Video canplay');
         if (firstLoad) {
-            videoElement?.pause();
+            await onlyExecuteIfInLobby(() => {
+                videoElement?.pause();
+            })
             firstLoad = false;
+            blockSignalRSending = false;
         }
     })
 
@@ -133,11 +140,21 @@ function registerVideoEvents() {
             await videoSyncService?.sendSeekState(videoElement.currentTime);
             blockSignalRSending = true;
         }
-        videoElement?.pause();
-        while (!videoElement?.paused) {
-            await delay(10);
-        }
+        await onlyExecuteIfInLobby(async () => {
+            videoElement?.pause();
+            while (!videoElement?.paused) {
+                await delay(10);
+            }
+        })
 
         blockSignalRSending = false;
     })
+}
+
+async function onlyExecuteIfInLobby(innerFunction: Function) {
+    if (!videoSyncService) return;
+    const lobbyData = await videoSyncService.getLobbyInfo();
+    if (lobbyData.isConnected && lobbyData.lobbyId?.length > 0) {
+        innerFunction();
+    }
 }

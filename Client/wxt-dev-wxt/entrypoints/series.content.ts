@@ -37,6 +37,10 @@ export default defineContentScript({
         ctx.addEventListener(window, "wxt:locationchange", async ({newUrl}) => {
             await locationChangedEventHandler(newUrl);
         });
+        
+        ctx.addEventListener(window, "beforeunload", async () => {
+            await videoSyncService.stopSignalRHub();
+        })
 
         onMessage('switchVideo', (msg) => {
             signalREvent = true;

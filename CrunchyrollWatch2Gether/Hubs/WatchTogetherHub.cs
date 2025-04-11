@@ -70,8 +70,8 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        await Clients.Group(groupId).SendAsync("PlayVideo", timeStamp);
-        // await Clients.OthersInGroup(groupId).SendAsync("PlayVideo");
+        // await Clients.Group(groupId).SendAsync("PlayVideo", timeStamp);
+        await Clients.OthersInGroup(groupId).SendAsync("PlayVideo", timeStamp);
         _logger.LogInformation("Client {ConnectionId} played video in group {GroupName}", Context.ConnectionId,
             groupId);
     }
