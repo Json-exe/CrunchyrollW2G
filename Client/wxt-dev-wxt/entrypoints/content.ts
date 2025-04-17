@@ -101,7 +101,7 @@ function registerVideoEvents() {
     videoElement.autoplay = false;
 
     videoElement.addEventListener('play', async () => {
-        console.log('Video playing');
+        console.log(`Video playing. Block SignalR: ${blockSignalRSending}`);
         if (!blockSignalRSending && !firstLoad && videoElement) {
             console.log('Sending play event to SignalR hub');
             await videoSyncService?.sendPlayState(videoElement.currentTime);
@@ -110,7 +110,7 @@ function registerVideoEvents() {
     })
 
     videoElement.addEventListener('pause', async () => {
-        console.log('Video paused');
+        console.log(`Video paused. Block SignalR: ${blockSignalRSending}`);
         if (!blockSignalRSending && !firstLoad) {
             console.log('Sending pause event to SignalR hub');
             await videoSyncService?.sendPausedState();
@@ -138,9 +138,9 @@ function registerVideoEvents() {
         if (!blockSignalRSending && !firstLoad && videoElement) {
             console.log('Sending seek event to SignalR hub');
             await videoSyncService?.sendSeekState(videoElement.currentTime);
-            blockSignalRSending = true;
         }
         await onlyExecuteIfInLobby(async () => {
+            blockSignalRSending = true;
             videoElement?.pause();
             while (!videoElement?.paused) {
                 await delay(10);
@@ -154,7 +154,7 @@ function registerVideoEvents() {
 async function onlyExecuteIfInLobby(innerFunction: Function) {
     if (!videoSyncService) return;
     const lobbyData = await videoSyncService.getLobbyInfo();
-    if (lobbyData.isConnected && lobbyData.lobbyId?.length > 0) {
+    if (lobbyData.isConnected && lobbyData.lobbyId && lobbyData.lobbyId.length > 0) {
         innerFunction();
     }
 }

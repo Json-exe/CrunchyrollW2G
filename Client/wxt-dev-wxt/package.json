@@ -2,7 +2,7 @@
   "name": "crunchyroll-w2g",
   "description": "A easy extension to sync video playback on Crunchyroll with your friends.",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "scripts": {
     "dev": "wxt",
