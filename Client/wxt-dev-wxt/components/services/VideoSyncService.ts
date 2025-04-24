@@ -1,4 +1,4 @@
-﻿import {HttpTransportType, HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
+﻿import {HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel} from "@microsoft/signalr";
 import {LobbyService} from "@/components/Interfaces";
 import {defineProxyService} from "@webext-core/proxy-service";
 import {sendMessage} from "@/components/MessagingTypes";
@@ -53,9 +53,12 @@ export class VideoSyncService {
         this.connection = new HubConnectionBuilder()
             .withUrl(import.meta.env.WXT_SIGNALR_URL, {
                 withCredentials: false,
-                transport: HttpTransportType.WebSockets
+                transport: HttpTransportType.WebSockets,
             })
             .withAutomaticReconnect()
+            .configureLogging(LogLevel.Information)
+            .withKeepAliveInterval(15000)
+            .withServerTimeout(30000)
             .build();
         try {
             await this.connection.start();
@@ -71,17 +74,17 @@ export class VideoSyncService {
     }
 
     private registerSignalREvents(connection: HubConnection) {
-        connection.onclose(async () => {
-            console.log('SignalR hub connection closed');
+        connection.onclose(async (error) => {
+            console.log('SignalR hub connection closed. Error: ', error);
             this.lobbyInfo.isConnected = false;
             this.lobbyInfo.lobbyId = undefined;
         })
-        connection.onreconnecting(() => {
-            console.log('SignalR hub connection lost, reconnecting...');
+        connection.onreconnecting((error) => {
+            console.log('SignalR hub connection lost, reconnecting... Error: ', error);
             this.lobbyInfo.isConnected = false;
         })
         connection.onreconnected(async () => {
-            console.log('SignalR hub reconnected');
+            console.log('SignalR hub reconnected!');
             this.lobbyInfo.isConnected = true;
             if (this.lobbyInfo.lobbyId) {
                 await this.joinLobby(this.lobbyInfo.lobbyId);

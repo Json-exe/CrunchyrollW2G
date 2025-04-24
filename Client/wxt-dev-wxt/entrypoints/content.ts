@@ -78,7 +78,7 @@ function registerServiceEvents() {
 
     onMessage('videoPause', () => {
         console.log('Video pause');
-        if (videoElement) {
+        if (videoElement && !videoElement.paused) {
             blockSignalRSending = true;
             videoElement.pause();
         }
