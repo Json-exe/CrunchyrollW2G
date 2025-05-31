@@ -5,6 +5,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div style="display: flex; flex-direction: column; gap: 8px; min-width: 300px;">
     <img src="./icon.png" alt="Extension icon" height="50" width="50" style="align-self: center;">
     <h2 id="current-lobby-info">No Lobby</h2>
+    <h3 id="current-lobby-watcher">Watching: 1</h3>
     <button id="reload-lobby-info">Reload</button>
     <div class="card" style="display: flex; gap: 3px; justify-content: center; align-items: center;">
         <input id="lobby-id-input" type="text" placeholder="Enter lobby ID" />
@@ -24,6 +25,7 @@ createBtn.addEventListener('click', createNewLobby);
 const leaveBtn = document.getElementById('leave-lobby-btn')!;
 const lobbyInfo = document.getElementById('current-lobby-info') as HTMLHeadingElement;
 leaveBtn.addEventListener('click', leaveLobby);
+const watcherCount = document.getElementById('current-lobby-watcher') as HTMLHeadingElement;
 
 const videoSyncService = useVideoSyncService();
 
@@ -66,19 +68,23 @@ async function leaveLobby() {
 
 async function reloadLobbyInfo() {
     const lobby = await videoSyncService.getLobbyInfo();
+    const watchers = await videoSyncService.getWatcherCount();
     console.log('Lobby data:', lobby);
     if (lobby.isConnected && lobby.lobbyId) {
         lobbyInfo.innerText = `Lobby: ${lobby.lobbyId}`;
         createBtn.style.display = 'none';
         leaveBtn.style.display = 'block';
+        watcherCount.innerText = `Watching: ${watchers}`;
     } else if (lobby.isConnected) {
         lobbyInfo.innerText = `No Lobby`;
         createBtn.style.display = 'block';
         leaveBtn.style.display = 'none';
+        watcherCount.innerText = `Watching: ${watchers}`;
     } else if (!lobby.isConnected) {
         lobbyInfo.innerText = `Not connected`;
         createBtn.style.display = 'none';
         leaveBtn.style.display = 'none';
+        watcherCount.innerText = `Watching: ${watchers}`;
     }
 }
 

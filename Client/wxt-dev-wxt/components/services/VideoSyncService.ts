@@ -10,6 +10,11 @@ export class VideoSyncService {
     public getLobbyInfo() {
         return this.lobbyInfo;
     }
+    
+    public async getWatcherCount() {
+        if (!this.lobbyInfo.lobbyId || !this.lobbyInfo.isConnected) return 0;
+        return await this.connection?.invoke<number>("GetWatchers", this.lobbyInfo.lobbyId) ?? 0;
+    }
 
     public async sendPlayState(timeStamp: number) {
         if (this.connection) {

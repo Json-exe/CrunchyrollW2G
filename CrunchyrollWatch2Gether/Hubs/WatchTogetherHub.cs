@@ -5,6 +5,7 @@ namespace CrunchyrollWatch2Gether.Hubs;
 internal class WatchTogetherHub : Hub
 {
     private readonly ILogger<WatchTogetherHub> _logger;
+    private readonly Dictionary<string, int> _groupWatchers = new();
 
     public WatchTogetherHub(ILogger<WatchTogetherHub> logger)
     {
@@ -17,10 +18,26 @@ internal class WatchTogetherHub : Hub
         return base.OnConnectedAsync();
     }
 
-    public override Task OnDisconnectedAsync(Exception? exception)
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
-        return base.OnDisconnectedAsync(exception);
+        if (GetGroupId(out var groupId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+            if (_groupWatchers.TryGetValue(groupId, out var watchers))
+            {
+                if (watchers - 1 == 0)
+                {
+                    _groupWatchers.Remove(groupId);
+                }
+                else
+                {
+                    _groupWatchers[groupId] = watchers - 1;
+                }
+            }
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 
     public async Task<string> CreateLobby()
@@ -28,12 +45,24 @@ internal class WatchTogetherHub : Hub
         if (GetGroupId(out var groupId))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+            if (_groupWatchers.TryGetValue(groupId, out var watchers))
+            {
+                if (watchers - 1 == 0)
+                {
+                    _groupWatchers.Remove(groupId);
+                }
+                else
+                {
+                    _groupWatchers[groupId] = watchers - 1;
+                }
+            }
         }
 
         groupId = Guid.NewGuid().ToString();
         Context.Items.TryAdd("GroupId", groupId);
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
         _logger.LogInformation("Client {ConnectionId} created group {GroupName}", Context.ConnectionId, groupId);
+        _groupWatchers.TryAdd(groupId, 1);
         return groupId;
     }
 
@@ -43,11 +72,12 @@ internal class WatchTogetherHub : Hub
         {
             return;
         }
-        
+
         Context.Items["VideoUrl"] = url;
         // await Clients.Group(groupId).SendAsync("SwitchVideo", url);
         await Clients.OthersInGroup(groupId).SendAsync("SwitchVideo", url);
-        _logger.LogInformation("Client {ConnectionId} switched video to {Url} in group {GroupName}", Context.ConnectionId,
+        _logger.LogInformation("Client {ConnectionId} switched video to {Url} in group {GroupName}",
+            Context.ConnectionId,
             url, groupId);
     }
 
@@ -56,11 +86,30 @@ internal class WatchTogetherHub : Hub
         if (GetGroupId(out var existingGroupId))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, existingGroupId);
+            if (_groupWatchers.TryGetValue(groupId, out var watchers))
+            {
+                if (watchers - 1 == 0)
+                {
+                    _groupWatchers.Remove(groupId);
+                }
+                else
+                {
+                    _groupWatchers[groupId] = watchers - 1;
+                }
+            }
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
         Context.Items.TryAdd("GroupId", groupId);
         _logger.LogInformation("Client {ConnectionId} joined group {GroupName}", Context.ConnectionId, groupId);
+        if (_groupWatchers.TryGetValue(groupId, out _))
+        {
+            _groupWatchers[groupId] += 1;
+        }
+        else
+        {
+            _groupWatchers.TryAdd(groupId, 1);
+        }
     }
 
     public async Task PlayVideo(float timeStamp = 0)
@@ -123,5 +172,10 @@ internal class WatchTogetherHub : Hub
         _logger.LogDebug("Client {ConnectionId} is not in a group", Context.ConnectionId);
         groupId = string.Empty;
         return false;
+    }
+
+    public int GetWatchers(string groupId)
+    {
+        return _groupWatchers[groupId];
     }
 }
