@@ -39,6 +39,8 @@ export default defineContentScript({
         });
         
         ctx.addEventListener(window, "beforeunload", async () => {
+            console.log("Series Content script beforeunload");
+            if (signalREvent) return;
             await videoSyncService.stopSignalRHub();
         })
 
