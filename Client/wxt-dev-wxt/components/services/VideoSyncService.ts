@@ -13,6 +13,7 @@ export class VideoSyncService {
     
     public async getWatcherCount() {
         if (!this.lobbyInfo.lobbyId || !this.lobbyInfo.isConnected) return 0;
+        console.log("Getting watcher count!");
         return await this.connection?.invoke<number>("GetWatchers", this.lobbyInfo.lobbyId) ?? 0;
     }
 
@@ -127,6 +128,13 @@ export class VideoSyncService {
                 }
             })
         })
+        connection.on('LobbyChanged', async () => {
+            try {
+                await sendMessage('lobbyChanged', undefined, undefined);
+            } catch (e) {
+                console.error('Error sending lobbyChanged message:', e);
+            }
+        });
     }
 
     public async joinLobby(lobbyId: string) {

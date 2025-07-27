@@ -89,3 +89,12 @@ async function reloadLobbyInfo() {
 }
 
 reloadLobbyInfo().then();
+const cleanup = onMessage('lobbyChanged', () => {
+    console.log('Lobby changed, reloading info...');
+    reloadLobbyInfo().then();
+});
+
+window.addEventListener('beforeunload', () => {
+    cleanup();
+    console.log('Popup script beforeunload, cleaning up...');
+});

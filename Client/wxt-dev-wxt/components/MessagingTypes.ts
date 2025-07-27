@@ -6,6 +6,7 @@ interface ProtocolMap {
     videoPause(): void;
     videoSeek(data: number): void;
     switchVideo(data: string): void;
+    lobbyChanged(): void;
 }
 
 export const { sendMessage, onMessage } = defineExtensionMessaging<ProtocolMap>();

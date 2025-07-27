@@ -1,15 +1,17 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using CrunchyrollWatch2Gether.Services;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CrunchyrollWatch2Gether.Hubs;
 
 internal class WatchTogetherHub : Hub
 {
     private readonly ILogger<WatchTogetherHub> _logger;
-    private readonly Dictionary<string, int> _groupWatchers = new();
+    private readonly ConnectionService _connectionService;
 
-    public WatchTogetherHub(ILogger<WatchTogetherHub> logger)
+    public WatchTogetherHub(ILogger<WatchTogetherHub> logger, ConnectionService connectionService)
     {
         _logger = logger;
+        _connectionService = connectionService;
     }
 
     public override Task OnConnectedAsync()
@@ -24,17 +26,8 @@ internal class WatchTogetherHub : Hub
         if (GetGroupId(out var groupId))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
-            if (_groupWatchers.TryGetValue(groupId, out var watchers))
-            {
-                if (watchers - 1 == 0)
-                {
-                    _groupWatchers.Remove(groupId);
-                }
-                else
-                {
-                    _groupWatchers[groupId] = watchers - 1;
-                }
-            }
+            _connectionService.RemoveWatcher(groupId);
+            await Clients.OthersInGroup(groupId).SendAsync("LobbyChanged");
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -45,24 +38,14 @@ internal class WatchTogetherHub : Hub
         if (GetGroupId(out var groupId))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
-            if (_groupWatchers.TryGetValue(groupId, out var watchers))
-            {
-                if (watchers - 1 == 0)
-                {
-                    _groupWatchers.Remove(groupId);
-                }
-                else
-                {
-                    _groupWatchers[groupId] = watchers - 1;
-                }
-            }
+            _connectionService.RemoveWatcher(groupId);
         }
 
         groupId = Guid.NewGuid().ToString();
-        Context.Items.TryAdd("GroupId", groupId);
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
+        Context.Items.TryAdd("GroupId", groupId);
+        _connectionService.AddWatcher(groupId);
         _logger.LogInformation("Client {ConnectionId} created group {GroupName}", Context.ConnectionId, groupId);
-        _groupWatchers.TryAdd(groupId, 1);
         return groupId;
     }
 
@@ -74,7 +57,6 @@ internal class WatchTogetherHub : Hub
         }
 
         Context.Items["VideoUrl"] = url;
-        // await Clients.Group(groupId).SendAsync("SwitchVideo", url);
         await Clients.OthersInGroup(groupId).SendAsync("SwitchVideo", url);
         _logger.LogInformation("Client {ConnectionId} switched video to {Url} in group {GroupName}",
             Context.ConnectionId,
@@ -86,30 +68,15 @@ internal class WatchTogetherHub : Hub
         if (GetGroupId(out var existingGroupId))
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, existingGroupId);
-            if (_groupWatchers.TryGetValue(groupId, out var watchers))
-            {
-                if (watchers - 1 == 0)
-                {
-                    _groupWatchers.Remove(groupId);
-                }
-                else
-                {
-                    _groupWatchers[groupId] = watchers - 1;
-                }
-            }
+            _connectionService.RemoveWatcher(existingGroupId);
+            await Clients.OthersInGroup(existingGroupId).SendAsync("LobbyChanged");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
         Context.Items.TryAdd("GroupId", groupId);
+        _connectionService.AddWatcher(groupId);
+        await Clients.OthersInGroup(groupId).SendAsync("LobbyChanged");
         _logger.LogInformation("Client {ConnectionId} joined group {GroupName}", Context.ConnectionId, groupId);
-        if (_groupWatchers.TryGetValue(groupId, out _))
-        {
-            _groupWatchers[groupId] += 1;
-        }
-        else
-        {
-            _groupWatchers.TryAdd(groupId, 1);
-        }
     }
 
     public async Task PlayVideo(float timeStamp = 0)
@@ -119,7 +86,6 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        // await Clients.Group(groupId).SendAsync("PlayVideo", timeStamp);
         await Clients.OthersInGroup(groupId).SendAsync("PlayVideo", timeStamp);
         _logger.LogInformation("Client {ConnectionId} played video in group {GroupName}", Context.ConnectionId,
             groupId);
@@ -132,7 +98,6 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        // await Clients.Group(groupId).SendAsync("PauseVideo");
         await Clients.OthersInGroup(groupId).SendAsync("PauseVideo");
         _logger.LogInformation("Client {ConnectionId} stopped video in group {GroupName}", Context.ConnectionId,
             groupId);
@@ -145,7 +110,6 @@ internal class WatchTogetherHub : Hub
             return;
         }
 
-        // await Clients.Group(groupId).SendAsync("SeekVideo", timeStamp);
         await Clients.OthersInGroup(groupId).SendAsync("SeekVideo", timeStamp);
         _logger.LogInformation("Client {ConnectionId} seeked video with timestamp {TimeStamp} in group {GroupName}",
             Context.ConnectionId, timeStamp, groupId);
@@ -157,6 +121,8 @@ internal class WatchTogetherHub : Hub
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
             Context.Items.Remove("GroupId");
+            _connectionService.RemoveWatcher(groupId);
+            await Clients.OthersInGroup(groupId).SendAsync("LobbyChanged");
             _logger.LogInformation("Client {ConnectionId} left group {GroupName}", Context.ConnectionId, groupId);
         }
     }
@@ -176,6 +142,7 @@ internal class WatchTogetherHub : Hub
 
     public int GetWatchers(string groupId)
     {
-        return _groupWatchers[groupId];
+        _logger.LogDebug("Retrieving watcher count for lobby: {LobbyId}", groupId);
+        return _connectionService.GetWatchers(groupId);
     }
 }

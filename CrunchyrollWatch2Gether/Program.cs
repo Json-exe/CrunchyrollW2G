@@ -1,4 +1,5 @@
 using CrunchyrollWatch2Gether.Hubs;
+using CrunchyrollWatch2Gether.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
     });
 });
+builder.Services.AddSingleton<ConnectionService>();
 
 var app = builder.Build();
 
@@ -34,6 +36,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
 app.MapHub<WatchTogetherHub>("hubs/w2g");
