@@ -4,7 +4,7 @@ import {useVideoSyncService} from "@/components/services/VideoSyncService";
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div style="display: flex; flex-direction: column; gap: 8px; min-width: 300px;">
     <img src="./icon.png" alt="Extension icon" height="50" width="50" style="align-self: center;">
-    <h2 id="current-lobby-info">No Lobby</h2>
+    <h2 id="current-lobby-info" class="link">No Lobby</h2>
     <h3 id="current-lobby-watcher">Watching: 1</h3>
     <button id="reload-lobby-info">Reload</button>
     <div class="card" style="display: flex; gap: 3px; justify-content: center; align-items: center;">
@@ -24,6 +24,11 @@ const createBtn = document.getElementById('create-lobby-btn')!;
 createBtn.addEventListener('click', createNewLobby);
 const leaveBtn = document.getElementById('leave-lobby-btn')!;
 const lobbyInfo = document.getElementById('current-lobby-info') as HTMLHeadingElement;
+lobbyInfo.addEventListener('click', async () => {
+    if (lobbyInfo.dataset.lobbyId && lobbyInfo.dataset.lobbyId.length > 0) {
+        await navigator.clipboard.writeText(lobbyInfo.dataset.lobbyId);
+    }
+})
 leaveBtn.addEventListener('click', leaveLobby);
 const watcherCount = document.getElementById('current-lobby-watcher') as HTMLHeadingElement;
 
@@ -69,9 +74,11 @@ async function leaveLobby() {
 async function reloadLobbyInfo() {
     const lobby = await videoSyncService.getLobbyInfo();
     const watchers = await videoSyncService.getWatcherCount();
+    lobbyInfo.dataset.lobbyId = '';
     console.log('Lobby data:', lobby);
     if (lobby.isConnected && lobby.lobbyId) {
         lobbyInfo.innerText = `Lobby: ${lobby.lobbyId}`;
+        lobbyInfo.dataset.lobbyId = lobby.lobbyId;
         createBtn.style.display = 'none';
         leaveBtn.style.display = 'block';
         watcherCount.innerText = `Watching: ${watchers}`;
